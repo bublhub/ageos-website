@@ -41,8 +41,31 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
 });
 
 const demoTerminalMount = document.querySelector("#demo-terminal");
+let demoTerminalInitialized = false;
 
-if (demoTerminalMount && window.Terminal && window.FitAddon?.FitAddon) {
+function getFitAddonClass() {
+  const fitAddon = window.FitAddon;
+
+  if (typeof fitAddon === "function") {
+    return fitAddon;
+  }
+
+  return fitAddon?.FitAddon;
+}
+
+function initDemoTerminal() {
+  if (demoTerminalInitialized) {
+    return true;
+  }
+
+  const FitAddonClass = getFitAddonClass();
+
+  if (!demoTerminalMount || typeof window.Terminal !== "function" || typeof FitAddonClass !== "function") {
+    return false;
+  }
+
+  demoTerminalInitialized = true;
+
   const term = new Terminal({
     cursorBlink: true,
     blinkIntervalDuration: 600,
@@ -71,20 +94,25 @@ if (demoTerminalMount && window.Terminal && window.FitAddon?.FitAddon) {
     },
   });
 
-  const fitAddon = new FitAddon.FitAddon();
+  const fitAddon = new FitAddonClass();
   term.loadAddon(fitAddon);
   term.open(demoTerminalMount);
 
+  let demoStarted = false;
+
   const startDemo = () => {
     fitAddon.fit();
-    if (term.cols > 0) {
-      runDemoLoop();
-      return;
-    }
-    requestAnimationFrame(startDemo);
-  };
 
-  requestAnimationFrame(startDemo);
+    if (term.cols > 0 && term.rows > 0) {
+      if (!demoStarted) {
+        demoStarted = true;
+        runDemoLoop();
+      }
+      return true;
+    }
+
+    return false;
+  };
 
   const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
@@ -216,7 +244,7 @@ if (demoTerminalMount && window.Terminal && window.FitAddon?.FitAddon) {
   async function runDemoOnce() {
     term.focus();
 
-    await typeCommand([ageosSegments], 'ageos prompt "Hello, how are you?"');
+    await typeCommand(ageosSegments, 'ageos prompt "Hello, how are you?"');
     term.writeln("");
     await typeMuted("Hi! I'm a local nemotron, how can I help you today?");
     await sleep(700);
@@ -249,7 +277,34 @@ if (demoTerminalMount && window.Terminal && window.FitAddon?.FitAddon) {
     const resizeObserver = new ResizeObserver(resizeTerminal);
     resizeObserver.observe(demoTerminalMount);
   }
+
+  if (!startDemo()) {
+    const startWhenSized = () => {
+      if (startDemo()) {
+        sizeObserver.disconnect();
+      }
+    };
+
+    const sizeObserver = new ResizeObserver(startWhenSized);
+    sizeObserver.observe(demoTerminalMount);
+    window.setTimeout(startWhenSized, 250);
+    window.setTimeout(startWhenSized, 1000);
+  }
+
+  return true;
 }
+
+function bootDemoTerminal(attempt = 0) {
+  if (initDemoTerminal()) {
+    return;
+  }
+
+  if (attempt < 50) {
+    window.setTimeout(() => bootDemoTerminal(attempt + 1), 100);
+  }
+}
+
+bootDemoTerminal();
 
 const downloadForm = document.querySelector("#download-form");
 
