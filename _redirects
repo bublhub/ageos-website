@@ -1,4 +1,2 @@
 /install.sh https://github.com/ageos-labs/ageos-runtime/releases/latest/download/install.sh 302
 /install.ps1 https://github.com/ageos-labs/ageos-runtime/releases/latest/download/install.ps1 302
-/download/linux* https://github.com/ageos-labs/ageos-runtime/releases/latest/download/ageos.deb 302
-/download/windows* https://github.com/ageos-labs/ageos-runtime/releases/latest/download/ageos.exe 302

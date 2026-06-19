@@ -2,17 +2,55 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="refresh" content="0; url=https://github.com/ageos-labs/ageos-runtime/releases/latest/download/ageos.exe">
     <title>Downloading AgeOS for Windows</title>
-    <link rel="canonical" href="https://github.com/ageos-labs/ageos-runtime/releases/latest/download/ageos.exe">
+    <link rel="canonical" href="https://github.com/ageos-labs/ageos-runtime/releases/latest">
   </head>
   <body>
+    <p id="status">Finding the latest AgeOS Windows download...</p>
     <p>
-      Redirecting to the
-      <a href="https://github.com/ageos-labs/ageos-runtime/releases/latest/download/ageos.exe">AgeOS Windows download</a>.
+      <a id="fallback-link" href="https://github.com/ageos-labs/ageos-runtime/releases/latest" hidden>
+        Open the latest AgeOS release
+      </a>
     </p>
     <script>
-      window.location.replace("https://github.com/ageos-labs/ageos-runtime/releases/latest/download/ageos.exe");
+      const latestReleaseApi = "https://api.github.com/repos/ageos-labs/ageos-runtime/releases/latest";
+      const latestReleasePage = "https://github.com/ageos-labs/ageos-runtime/releases/latest";
+      const status = document.querySelector("#status");
+      const fallbackLink = document.querySelector("#fallback-link");
+
+      async function redirectToLatestAsset() {
+        try {
+          const response = await fetch(latestReleaseApi, {
+            headers: {
+              Accept: "application/vnd.github+json",
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`GitHub release lookup failed: ${response.status}`);
+          }
+
+          const release = await response.json();
+          const assets = Array.isArray(release.assets) ? release.assets : [];
+          const candidates = assets.filter((asset) => asset.name?.toLowerCase().endsWith(".exe"));
+          const asset =
+            candidates.find((candidate) => candidate.name.toLowerCase().includes("x64")) ||
+            candidates.find((candidate) => candidate.name.toLowerCase().includes("amd64")) ||
+            candidates[0];
+
+          if (!asset?.browser_download_url) {
+            throw new Error("No Windows download asset found");
+          }
+
+          window.location.replace(asset.browser_download_url);
+        } catch {
+          status.textContent = "Could not find the Windows installer automatically.";
+          fallbackLink.hidden = false;
+          fallbackLink.href = latestReleasePage;
+        }
+      }
+
+      redirectToLatestAsset();
     </script>
   </body>
 </html>
