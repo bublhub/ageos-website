@@ -15,6 +15,7 @@
       rel="stylesheet"
     >
     <link rel="icon" href="assets/ageos-icon.png" type="image/png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -68,27 +69,9 @@
           </div>
 
           <aside class="demo-card" aria-label="AgeOS terminal demo">
-            <div class="demo-header">
-              <span></span>
-              <span></span>
-              <span></span>
-              <strong>ageos-cli</strong>
+            <div class="terminal-frame">
+              <div id="demo-terminal" aria-label="Terminal demo"></div>
             </div>
-            <div class="video-frame">
-              <video id="demo-video" autoplay muted loop playsinline>
-                <!-- Add your looping demo source here: <source src="assets/ageos-demo.mp4" type="video/mp4"> -->
-              </video>
-              <div class="terminal-reel" aria-hidden="true">
-                <p><span>$</span> ageos prompt "Hello, how are you?"</p>
-                <p class="muted">prompt a local model</p>
-                <p><span>$</span> ageos run --binary ./agent.py</p>
-                <p class="muted">run an agent in a sandbox</p>
-                <p class="success">it's that simple!</p>
-              </div>
-            </div>
-            <p class="demo-note">
-              Add your looping demo at <code>assets/ageos-demo.mp4</code> and enable the video source above. Until then, the terminal reel keeps the layout alive.
-            </p>
           </aside>
         </section>
 
@@ -217,6 +200,8 @@
       </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

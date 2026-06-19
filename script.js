@@ -1,5 +1,25 @@
 const ENTERPRISE_EMAIL = "daniel@ageos-labs.com";
 
+const RESET = "\x1b[0m";
+const MUTED = "\x1b[2;38;5;245m";
+const SUCCESS = "\x1b[1;38;5;157m";
+const STARSHIP_CHAR = "\x1b[1;38;2;134;239;172m❯ \x1b[0m";
+const HIGHLIGHT = "\x1b[1;38;2;134;239;172m";
+const DIM = "\x1b[2;38;5;245m";
+
+function starshipSegment([r, g, b], text) {
+  return `\x1b[48;2;${r};${g};${b}m\x1b[38;2;255;255;255m ${text} ${RESET}`;
+}
+
+function writeStarshipPrompt(term, segments = []) {
+  if (segments.length > 0) {
+    term.write(segments.join(""));
+    term.writeln("");
+  }
+
+  term.write(STARSHIP_CHAR);
+}
+
 document.querySelectorAll("[data-copy]").forEach((button) => {
   button.addEventListener("click", async () => {
     const text = button.getAttribute("data-copy");
@@ -20,12 +40,215 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
   });
 });
 
-const demoVideo = document.querySelector("#demo-video");
+const demoTerminalMount = document.querySelector("#demo-terminal");
 
-if (demoVideo) {
-  demoVideo.addEventListener("canplay", () => {
-    demoVideo.closest(".demo-card")?.classList.add("has-video");
+if (demoTerminalMount && window.Terminal && window.FitAddon?.FitAddon) {
+  const term = new Terminal({
+    cursorBlink: true,
+    blinkIntervalDuration: 600,
+    cursorStyle: "block",
+    cursorInactiveStyle: "block",
+    disableStdin: true,
+    allowTransparency: true,
+    fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace',
+    fontSize: 14,
+    lineHeight: 1.35,
+    scrollback: 64,
+    theme: {
+      background: "rgba(0, 0, 0, 0)",
+      foreground: "#dbeafe",
+      cursor: "#86efac",
+      cursorAccent: "#020617",
+      selectionBackground: "rgba(103, 232, 249, 0.18)",
+      black: "#020617",
+      red: "#fb7185",
+      green: "#86efac",
+      yellow: "#facc15",
+      blue: "#93c5fd",
+      magenta: "#c4b5fd",
+      cyan: "#67e8f9",
+      white: "#dbeafe",
+    },
   });
+
+  const fitAddon = new FitAddon.FitAddon();
+  term.loadAddon(fitAddon);
+  term.open(demoTerminalMount);
+
+  const startDemo = () => {
+    fitAddon.fit();
+    if (term.cols > 0) {
+      runDemoLoop();
+      return;
+    }
+    requestAnimationFrame(startDemo);
+  };
+
+  requestAnimationFrame(startDemo);
+
+  const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+  const ageosSegments = [starshipSegment([0, 111, 189], "~")];
+
+  function ensureCursorVisible() {
+    term.options.cursorBlink = true;
+    term.options.blinkIntervalDuration = 600;
+    term.focus();
+    term.write("\x1b[?25h");
+  }
+
+  async function pauseAtPrompt(segments, delay) {
+    ensureCursorVisible();
+    writeStarshipPrompt(term, segments);
+    await sleep(delay);
+  }
+
+  async function typeResponse(text, speed = 24) {
+    term.focus();
+    term.write(` ${MUTED}`);
+
+    for (const character of text) {
+      term.write(character);
+      await sleep(speed);
+    }
+
+    term.write(RESET);
+    term.writeln("");
+    await sleep(420);
+  }
+
+  async function typeCommand(segments, command, { skipPrompt = false, speed = 26 } = {}) {
+    ensureCursorVisible();
+
+    if (!skipPrompt) {
+      writeStarshipPrompt(term, segments);
+    }
+
+    for (const character of command) {
+      term.write(character);
+      await sleep(speed);
+    }
+  }
+
+  async function typeMuted(text, speed = 24) {
+    term.focus();
+    term.write(`${MUTED}  │ ${RESET}${MUTED}`);
+
+    for (const character of text) {
+      term.write(character);
+      await sleep(speed);
+    }
+
+    term.write(RESET);
+    term.writeln("");
+    await sleep(520);
+  }
+  async function typeNormal(text, speed = 24) {
+    term.focus();
+    term.write(`${RESET}`);
+
+    for (const character of text) {
+      term.write(character);
+      await sleep(speed);
+    }
+  }
+
+  function viewportRow(bufferRow) {
+    return bufferRow - term.buffer.active.baseY + 1;
+  }
+
+  async function showPermissionMenu(question, options) {
+    const targetIndex = Math.floor(Math.random() * options.length);
+    const questionLine =
+      starshipSegment([147, 51, 234], "openclaw") + ` ${question}${RESET}`;
+
+    if (term.buffer.active.cursorX > 0) {
+      term.writeln("");
+    }
+
+    const questionRow = term.buffer.active.cursorY;
+    term.writeln(questionLine);
+    const menuStartRow = Math.max(term.buffer.active.cursorY, questionRow + 1);
+    const confirmRow = menuStartRow + options.length;
+
+    let activeIndex = 0;
+
+    const drawQuestion = () => {
+      term.write(`\x1b[${viewportRow(questionRow)};1H${questionLine}\x1b[K`);
+    };
+
+    const drawMenu = () => {
+      drawQuestion();
+
+      for (let index = 0; index < options.length; index += 1) {
+        const line =
+          index === activeIndex
+            ? `${HIGHLIGHT}❯ ${options[index]}${RESET}`
+            : `  ${DIM}${options[index]}${RESET}`;
+        term.write(`\x1b[${viewportRow(menuStartRow + index)};1H${line}\x1b[K`);
+      }
+    };
+
+    term.scrollToLine(Math.max(0, questionRow - 1));
+    drawMenu();
+    await sleep(480);
+
+    while (activeIndex !== targetIndex) {
+      activeIndex += activeIndex < targetIndex ? 1 : -1;
+      drawMenu();
+      await sleep(320);
+    }
+
+    await sleep(420);
+    drawQuestion();
+    term.write(
+      `\x1b[${viewportRow(confirmRow)};1H${HIGHLIGHT}✓ ${options[targetIndex]}${RESET}\x1b[K`,
+    );
+    term.writeln("");
+
+    const buffer = term.buffer.active;
+    term.write(`\x1b[${viewportRow(buffer.cursorY)};${buffer.cursorX + 1}H`);
+    await sleep(420);
+
+    return targetIndex;
+  }
+
+  async function runDemoOnce() {
+    term.focus();
+
+    await typeCommand([ageosSegments], 'ageos prompt "Hello, how are you?"');
+    term.writeln("");
+    await typeMuted("Hi! I'm a local nemotron, how can I help you today?");
+    await sleep(700);
+    await typeCommand([], "ageos run --binary ./openclaw", { skipPrompt: false });
+    term.writeln("");
+    await typeMuted("openclaw agent is reading your whatsapp messages");
+    await sleep(700);
+    await showPermissionMenu("Allow agent to use WhatsApp?", ["Always", "Never", "Ask every time"]);
+    term.writeln("");
+    term.writeln("");
+    await typeNormal("updating agent manifest");
+    await sleep(2200);
+
+  }
+
+  async function runDemoLoop() {
+    while (true) {
+      term.reset();
+      await runDemoOnce();
+    }
+  }
+
+  const resizeTerminal = () => {
+    fitAddon.fit();
+  };
+
+  window.addEventListener("resize", resizeTerminal);
+
+  if ("ResizeObserver" in window) {
+    const resizeObserver = new ResizeObserver(resizeTerminal);
+    resizeObserver.observe(demoTerminalMount);
+  }
 }
 
 const downloadForm = document.querySelector("#download-form");
