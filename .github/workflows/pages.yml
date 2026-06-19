@@ -25,7 +25,8 @@ jobs:
       - name: Build static site artifact
         run: |
           mkdir -p _site
-          cp index.html styles.css script.js README.md _headers _redirects install.sh install.ps1 CNAME _site/
+          cp index.html styles.css script.js README.md _headers install.sh install.ps1 CNAME _site/
+          python3 scripts/generate_redirects.py _site/_redirects
           touch _site/.nojekyll
           if [ -d assets ]; then
             cp -R assets _site/assets
