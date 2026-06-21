@@ -344,3 +344,27 @@ enterpriseForm?.addEventListener("submit", (event) => {
 
   window.location.href = `mailto:${ENTERPRISE_EMAIL}?subject=${subject}&body=${body}`;
 });
+
+function initAgentMarquee() {
+  const track = document.querySelector(".agent-marquee-track");
+  const group = track?.querySelector(".agent-marquee-group");
+
+  if (!track || !group || track.dataset.marqueeReady === "true") {
+    return;
+  }
+
+  track.dataset.marqueeReady = "true";
+
+  const clone = group.cloneNode(true);
+  clone.setAttribute("aria-hidden", "true");
+  clone.querySelectorAll("a").forEach((link) => {
+    link.tabIndex = -1;
+    link.removeAttribute("aria-label");
+    link.querySelectorAll("img").forEach((image) => {
+      image.alt = "";
+    });
+  });
+  track.appendChild(clone);
+}
+
+initAgentMarquee();
