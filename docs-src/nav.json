@@ -1,0 +1,66 @@
+[
+  {
+    "slug": "index",
+    "title": "Docs Home",
+    "description": "Start building with BubbleHub, the local agent runtime for private AI workflows.",
+    "section": "Start",
+    "kind": "index",
+    "source_path": "README.md",
+    "include_sections": ["What BubbleHub Does"]
+  },
+  {
+    "slug": "install",
+    "title": "Install BubbleHub",
+    "description": "Install BubbleHub on Linux or Windows, use Docker images, and verify your setup.",
+    "section": "Start",
+    "kind": "markdown",
+    "source_path": "README.md",
+    "include_sections": ["Install"]
+  },
+  {
+    "slug": "quick-start",
+    "title": "Quick Start",
+    "description": "Run your first prompt, open the Control Center, inspect models, and launch a local agent.",
+    "section": "Start",
+    "kind": "markdown",
+    "source_path": "README.md",
+    "include_sections": ["Quick Start"]
+  },
+  {
+    "slug": "cli",
+    "title": "CLI Reference",
+    "description": "Learn the core BubbleHub CLI commands for models, agents, serving, manifests, and diagnostics.",
+    "section": "Reference",
+    "kind": "cli_reference",
+    "source_path": "bubblehub/cli/main.py",
+    "supporting_sources": [
+      "bubblehub/cli/run.py",
+      "bubblehub/cli/shell.py"
+    ]
+  },
+  {
+    "slug": "running-agents",
+    "title": "Running Agents",
+    "description": "Run sandboxed agents with persistent workspaces, network approvals, and local model access.",
+    "section": "Guides",
+    "kind": "markdown",
+    "source_path": "README.md",
+    "include_sections": ["Agent Environment", "OpenClaw Example"]
+  },
+  {
+    "slug": "security",
+    "title": "Security & Sandboxing",
+    "description": "Understand BubbleHub's sandbox model, network approvals, protected workspaces, and current limits.",
+    "section": "Guides",
+    "kind": "markdown",
+    "source_path": "docs/sandbox.md"
+  },
+  {
+    "slug": "releases",
+    "title": "Releases",
+    "description": "Review the current BubbleHub release, install assets, Docker images, and release channels.",
+    "section": "Reference",
+    "kind": "markdown",
+    "source_path": ".github/releases/v0.1.0.md"
+  }
+]

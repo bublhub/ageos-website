@@ -1,4 +1,4 @@
-# AgeOS
+# BubbleHub
 
-- [Website](https://ageos.dev)
-- [Source code](https://github.com/ageos-labs/ageos-runtime)
+- [Website](https://bubblehub.ai)
+- [Source code](https://github.com/bublhub/BubbleHub)

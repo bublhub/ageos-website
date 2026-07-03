@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local static server for the AgeOS website."""
+"""Local static server for the BubbleHub website."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class ReusableTCPServer(socketserver.TCPServer):
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Serve the AgeOS website locally.")
+    parser = argparse.ArgumentParser(description="Serve the BubbleHub website locally.")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind to.")
     parser.add_argument("--port", default=4173, type=int, help="Port to bind to.")
     parser.add_argument("--open", action="store_true", help="Open the site in your browser.")
@@ -45,7 +45,7 @@ def main() -> None:
 
     with ReusableTCPServer((args.host, args.port), handler) as server:
         url = f"http://{args.host}:{args.port}"
-        print(f"Serving AgeOS website at {url}")
+        print(f"Serving BubbleHub website at {url}")
         print("Press Ctrl+C to stop.")
 
         if args.open:

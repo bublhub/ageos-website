@@ -1,5 +1,6 @@
-const LATEST_RELEASE_API = "https://api.github.com/repos/ageos-labs/ageos-runtime/releases/latest";
-const LATEST_RELEASE_PAGE = "https://github.com/ageos-labs/ageos-runtime/releases/latest";
+const LATEST_RELEASE_API = "https://api.github.com/repos/bublhub/BubbleHub/releases/latest";
+const LATEST_RELEASE_PAGE = "https://github.com/bublhub/BubbleHub/releases/latest";
+const BRAND_ASSET_KEYWORD = "bubblehub";
 
 const DOWNLOADS = {
   linux: {
@@ -56,7 +57,7 @@ async function fetchLatestRelease() {
   const response = await fetch(LATEST_RELEASE_API, {
     headers: {
       Accept: "application/vnd.github+json",
-      "User-Agent": "ageos-website",
+      "User-Agent": "bubblehub-website",
     },
     cf: {
       cacheTtl: 300,
@@ -72,7 +73,11 @@ async function fetchLatestRelease() {
 }
 
 function findAsset(assets = [], extension) {
-  const candidates = assets.filter((asset) => asset.name?.toLowerCase().endsWith(extension));
+  const candidates = assets.filter((asset) => {
+    const name = asset.name?.toLowerCase() || "";
+
+    return name.endsWith(extension) && name.includes(BRAND_ASSET_KEYWORD);
+  });
 
   return (
     candidates.find((asset) => asset.name.toLowerCase().includes("x64")) ||

@@ -116,7 +116,7 @@ function initDemoTerminal() {
 
   const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-  const ageosSegments = [starshipSegment([0, 111, 189], "~")];
+  const bubbleHubSegments = [starshipSegment([0, 111, 189], "~")];
 
   function ensureCursorVisible() {
     term.options.cursorBlink = true;
@@ -244,13 +244,13 @@ function initDemoTerminal() {
   async function runDemoOnce() {
     term.focus();
 
-    await typeCommand(ageosSegments, 'ageos prompt "Hello, how are you?"');
+    await typeCommand(bubbleHubSegments, 'bubble prompt "Hello, how are you?"');
     term.writeln("");
     await typeMuted("Hi! I'm a local nemotron, how can I help you today?");
     await sleep(700);
-    await typeCommand([], "ageos run --binary ./openclaw", { skipPrompt: false });
+    await typeCommand([], "bubble run --binary ./openclaw", { skipPrompt: false });
     term.writeln("");
-    await typeMuted("openclaw agent is reading your whatsapp messages");
+    await typeMuted("openclaw agent is reading your WhatsApp messages");
     await sleep(700);
     await showPermissionMenu("Allow agent to use WhatsApp?", ["Always", "Never", "Ask every time"]);
     term.writeln("");
@@ -330,7 +330,7 @@ enterpriseForm?.addEventListener("submit", (event) => {
   const company = formData.get("company")?.toString().trim() || "Unknown";
   const message = formData.get("message")?.toString().trim() || "";
 
-  const subject = encodeURIComponent(`AgeOS enterprise inquiry from ${company}`);
+  const subject = encodeURIComponent(`BubbleHub enterprise inquiry from ${company}`);
   const body = encodeURIComponent(
     [
       `Name: ${name}`,
@@ -368,3 +368,145 @@ function initAgentMarquee() {
 }
 
 initAgentMarquee();
+
+function initDocsCodeCopy() {
+  document.querySelectorAll("[data-copy-code]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const code = button.closest(".docs-code-block")?.querySelector("code")?.textContent || "";
+      const previousLabel = button.textContent;
+
+      try {
+        await navigator.clipboard.writeText(code);
+        button.textContent = "Copied";
+        button.classList.add("is-copied");
+
+        window.setTimeout(() => {
+          button.textContent = previousLabel;
+          button.classList.remove("is-copied");
+        }, 1400);
+      } catch {
+        button.textContent = "Select text";
+      }
+    });
+  });
+}
+
+function initDocsSearch() {
+  const input = document.querySelector("[data-docs-search]");
+  const results = document.querySelector("[data-docs-search-results]");
+
+  if (!input || !results) {
+    return;
+  }
+
+  let searchIndex = [];
+  let isLoaded = false;
+
+  const loadIndex = async () => {
+    if (isLoaded) {
+      return searchIndex;
+    }
+
+    isLoaded = true;
+    const indexUrl = input.getAttribute("data-search-index");
+
+    try {
+      const response = await fetch(indexUrl);
+      if (!response.ok) {
+        throw new Error(`Docs search index failed: ${response.status}`);
+      }
+      searchIndex = await response.json();
+    } catch {
+      searchIndex = [];
+    }
+
+    return searchIndex;
+  };
+
+  const clearResults = () => {
+    results.hidden = true;
+    results.replaceChildren();
+  };
+
+  const renderResults = (matches, query) => {
+    results.replaceChildren();
+
+    if (matches.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "docs-search-empty";
+      empty.textContent = `No docs found for "${query}".`;
+      results.append(empty);
+      results.hidden = false;
+      return;
+    }
+
+    matches.slice(0, 6).forEach((entry) => {
+      const link = document.createElement("a");
+      link.className = "docs-search-result";
+      link.href = entry.href;
+
+      const title = document.createElement("strong");
+      title.textContent = entry.title;
+      const description = document.createElement("span");
+      description.textContent = entry.description;
+
+      link.append(title, description);
+      results.append(link);
+    });
+
+    results.hidden = false;
+  };
+
+  const scoreEntry = (entry, terms) => {
+    const title = entry.title.toLowerCase();
+    const description = entry.description.toLowerCase();
+    const text = entry.text.toLowerCase();
+
+    return terms.reduce((score, term) => {
+      if (title.includes(term)) {
+        return score + 4;
+      }
+      if (description.includes(term)) {
+        return score + 2;
+      }
+      if (text.includes(term)) {
+        return score + 1;
+      }
+      return score;
+    }, 0);
+  };
+
+  input.addEventListener("input", async () => {
+    const query = input.value.trim().toLowerCase();
+
+    if (query.length < 2) {
+      clearResults();
+      return;
+    }
+
+    const terms = query.split(/\s+/).filter(Boolean);
+    const index = await loadIndex();
+    const matches = index
+      .map((entry) => ({ ...entry, score: scoreEntry(entry, terms) }))
+      .filter((entry) => entry.score > 0)
+      .sort((left, right) => right.score - left.score);
+
+    renderResults(matches, query);
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!results.contains(event.target) && event.target !== input) {
+      clearResults();
+    }
+  });
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      clearResults();
+      input.blur();
+    }
+  });
+}
+
+initDocsCodeCopy();
+initDocsSearch();

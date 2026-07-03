@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
+  repository_dispatch:
+    types: [bubblehub-docs-updated]
 
 permissions:
   contents: read
@@ -23,10 +27,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build static site artifact
+        env:
+          BUBBLEHUB_DOCS_REF: main
         run: |
           mkdir -p _site
           cp index.html styles.css script.js README.md _headers install.sh install.ps1 CNAME _site/
           python3 scripts/generate_redirects.py _site/_redirects
+          python3 scripts/build_docs.py --output-dir _site/docs
           touch _site/.nojekyll
           if [ -d assets ]; then
             cp -R assets _site/assets

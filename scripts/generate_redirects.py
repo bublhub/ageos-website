@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Cloudflare _redirects for latest AgeOS release assets."""
+"""Generate Cloudflare _redirects for latest BubbleHub release assets."""
 
 from __future__ import annotations
 
@@ -7,7 +7,9 @@ import json
 import sys
 import urllib.request
 
-LATEST_RELEASE_API = "https://api.github.com/repos/ageos-labs/ageos-runtime/releases/latest"
+LATEST_RELEASE_API = "https://api.github.com/repos/bublhub/BubbleHub/releases/latest"
+LATEST_RELEASE_PAGE = "https://github.com/bublhub/BubbleHub/releases/latest"
+BRAND_ASSET_KEYWORD = "bubblehub"
 
 
 def fetch_latest_release() -> dict:
@@ -15,7 +17,7 @@ def fetch_latest_release() -> dict:
         LATEST_RELEASE_API,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "ageos-website",
+            "User-Agent": "bubblehub-website",
         },
     )
 
@@ -28,6 +30,7 @@ def pick_asset(assets: list[dict], extension: str) -> dict | None:
         asset
         for asset in assets
         if asset.get("name", "").lower().endswith(extension)
+        and BRAND_ASSET_KEYWORD in asset.get("name", "").lower()
     ]
 
     for keyword in ("x64", "amd64"):
@@ -44,16 +47,12 @@ def main() -> int:
     linux = pick_asset(assets, ".deb")
     windows = pick_asset(assets, ".exe")
 
-    if not linux or not windows:
-        print("Could not find Linux .deb and Windows .exe assets in latest release.", file=sys.stderr)
-        return 1
-
     redirects = "\n".join(
         [
-            "/install.sh https://github.com/ageos-labs/ageos-runtime/releases/latest/download/install.sh 302",
-            "/install.ps1 https://github.com/ageos-labs/ageos-runtime/releases/latest/download/install.ps1 302",
-            f"/download/linux* {linux['browser_download_url']} 302",
-            f"/download/windows* {windows['browser_download_url']} 302",
+            "/install.sh https://github.com/bublhub/BubbleHub/releases/latest/download/install.sh 302",
+            "/install.ps1 https://github.com/bublhub/BubbleHub/releases/latest/download/install.ps1 302",
+            f"/download/linux* {download_url(linux)} 302",
+            f"/download/windows* {download_url(windows)} 302",
             "",
         ]
     )
@@ -63,9 +62,23 @@ def main() -> int:
         handle.write(redirects)
 
     print(f"Wrote {output_path}")
-    print(f"  linux -> {linux['name']}")
-    print(f"  windows -> {windows['name']}")
+    print(f"  linux -> {download_label(linux)}")
+    print(f"  windows -> {download_label(windows)}")
     return 0
+
+
+def download_url(asset: dict | None) -> str:
+    if asset:
+        return asset["browser_download_url"]
+
+    return LATEST_RELEASE_PAGE
+
+
+def download_label(asset: dict | None) -> str:
+    if asset:
+        return asset["name"]
+
+    return "latest release page"
 
 
 if __name__ == "__main__":
